@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<data>
-    <base_address_island_0>0x08000000</base_address_island_0>
-    <base_address_island_1>0x08010000</base_address_island_1>
-    <base_address_island_2>0x08020000</base_address_island_2>
-    <base_address_island_3>0x08030000</base_address_island_3>
-    <base_address_island_4>0x08040000</base_address_island_4>
-    <base_address_island_5>0x08050000</base_address_island_5>
-</data>
