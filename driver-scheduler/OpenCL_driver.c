@@ -35,7 +35,7 @@ int i;
 /*
   Helper function for incremeting the workgroup id in 3 dimensions. 
  */
-int* increment_wg_id(int* current_wg_id, int* max_wg_id)
+void increment_wg_id(int* current_wg_id, int* max_wg_id)
 {
 	if(current_wg_id[0] < max_wg_id[0] - 1)
 		current_wg_id[0]++;
@@ -252,6 +252,86 @@ void launchWgs(volatile int* kernel_loc,
 	  wg_num++;
   }
 }
+
+
+void launchWg(volatile int* kernel_loc, int wg_id[],
+               int num_of_inputs, uint32_t* inputs[], int input_width,
+               int num_of_outputs, uint32_t* outputs[], int output_width,
+               bool blocking)
+{
+  #ifdef DEBUG
+    printf("kernel_loc: 0x%015x \n\r", kernel_loc);
+  #endif
+  
+  volatile char *control = (volatile char*)kernel_loc;
+
+  volatile int *wg_x = (volatile int*)(kernel_loc + 4); 
+  volatile int *wg_y = (volatile int*)(kernel_loc + 6);
+  volatile int *wg_z = (volatile int*)(kernel_loc + 8);
+
+  volatile int *o_x = (volatile int*)(kernel_loc + 10);
+  volatile int *o_y = (volatile int*)(kernel_loc + 12);
+  volatile int *o_z = (volatile int*)(kernel_loc + 14);
+
+  volatile int *inputs_addr = (volatile int*)(kernel_loc + 16);
+  volatile int *outputs_addr = (volatile int*)(kernel_loc + 16 
+                                                + num_of_inputs*input_width);
+
+  #ifdef DEBUG
+    printf("wg_x: %15x, o_z: %15x\n", wg_x, o_z);
+  #endif
+  
+  #ifdef DEBUG
+    printf("input_addrs: 0x%015x  output_addrs: 0x%015x \n\r", 
+           inputs_addr, outputs_addr);
+  #endif
+  *wg_x = wg_id[0];
+  *wg_y = wg_id[1];
+  *wg_z = wg_id[2];
+
+  *o_x = 0;
+  *o_y = 0;
+  *o_z = 0;
+
+  for(i = 0; i < num_of_inputs; i++)
+	  *(volatile int *)(inputs_addr + i*input_width) 
+	    = (volatile int *) inputs[i];
+
+  for(i = 0; i < num_of_outputs; i++)
+	  *(volatile int *)(outputs_addr + i*output_width) 
+      = (volatile int *) outputs[i];
+
+  #ifdef DEBUG
+    printf("Status of control register: \n\r");
+  #endif
+  
+  unsigned int con = *control;
+  
+  #ifdef DEBUG
+  // print status register bits
+  for (i = 0; i < 8; i ++) {
+	  if (con & (1 << i) ) {
+		  printf("1");
+	  } else {
+		  printf("0");
+	  }
+  }
+  printf("\n\r");
+
+  printf("Starting OpenCL kernel execution\n\r");
+  #endif
+  *control = *control | 1; /* start */
+
+  if(blocking)
+  {
+    /* waiting for hardware to report "done" */
+    while (! ((*control) & 2));
+
+    #ifdef DEBUG
+      printf("DONE with wg: %d !\n\r", wg_num);
+    #endif
+  }
+} // launchWg
 
 /*
   Retrives the control register status of the accelerator as per the Xilinx 
