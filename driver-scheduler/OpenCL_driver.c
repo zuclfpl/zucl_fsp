@@ -26,7 +26,7 @@
 #include <stdint.h>
 
 // It depends on how the openCL kernel was synthesized
-#define WG_SIZE_X 16
+#define WG_SIZE_X 2
 #define MAX_WGS 1
 #define DEBUG 1
 
@@ -152,10 +152,10 @@ void launchKernel(volatile int* kernel_loc,
 
 	  printf("Starting OpenCL kernel execution\n\r");
 	  #endif
-	  *control = *control | 1; /* start */
+	  *control = *control | 1; // start
 
-	  /* waiting for hardware to report "done" */
-	  while (! ((*control) & 2));
+	  //  waiting for hardware to report "done" 
+	  while (! ((*control) & 2));//{printf(".");}
 	  
 	  #ifdef DEBUG
 	    printf("DONE with wg: %d !\n\r", wg_num);
@@ -165,6 +165,7 @@ void launchKernel(volatile int* kernel_loc,
 	  wg_num++;
   }
 }
+
 
 void launchWgs(volatile int* kernel_loc,
                int nd_range[], int wg_size[], 
@@ -239,10 +240,10 @@ void launchWgs(volatile int* kernel_loc,
 
 	  printf("Starting OpenCL kernel execution\n\r");
 	  #endif
-	  *control = *control | 1; /* start */
+	  *control = *control | 1; //start
 
-	  /* waiting for hardware to report "done" */
-	  while (! ((*control) & 2));
+	  // waiting for hardware to report "done" 
+	  while (! ((*control) & 2)){printf(".");}
 	  
 	  #ifdef DEBUG
 	    printf("DONE with wg: %d !\n\r", wg_num);
@@ -257,7 +258,7 @@ void launchWgs(volatile int* kernel_loc,
 void launchWg(volatile int* kernel_loc, int wg_id[],
                int num_of_inputs, uint32_t* inputs[], int input_width,
                int num_of_outputs, uint32_t* outputs[], int output_width,
-               bool blocking)
+               int blocking)
 {
   #ifdef DEBUG
     printf("kernel_loc: 0x%015x \n\r", kernel_loc);
@@ -320,16 +321,12 @@ void launchWg(volatile int* kernel_loc, int wg_id[],
 
   printf("Starting OpenCL kernel execution\n\r");
   #endif
-  *control = *control | 1; /* start */
+  *control = *control | 1; // start
 
   if(blocking)
   {
-    /* waiting for hardware to report "done" */
-    while (! ((*control) & 2));
-
-    #ifdef DEBUG
-      printf("DONE with wg: %d !\n\r", wg_num);
-    #endif
+    //  waiting for hardware to report "done" 
+    while (! ((*control) & 2)){printf(".");}
   }
 } // launchWg
 
@@ -353,10 +350,11 @@ char get_status(volatile int* kernel_loc)
 
 void set_status(volatile int* kernel_loc, volatile char* control)
 {
-  (volatile char*) kernel_loc *= control;
+  ((volatile char*) kernel_loc)[0] = *control;
 } // get_status()
 
 /*
+  queries done signal from accelerator
  */
 int is_done(volatile int* kernel_loc)
 {
@@ -368,7 +366,7 @@ int is_done(volatile int* kernel_loc)
   Example source code for programming an OpenCL kernel (vector add)
   using the ZUCL openCL driver.
  */
-uint32_t* programVadd(int* baseAddress, int* originalAddress, 
+uint32_t* programInc3d(int* baseAddress, int* originalAddress, 
                       uint32_t* data_mem, uint32_t* orig_data_mem)
 {
   // allocate data for kernel in mmapped space
@@ -396,14 +394,14 @@ uint32_t* programVadd(int* baseAddress, int* originalAddress,
   // Setup arguments for the driver. 
   int num_of_inputs = 2;
   uint32_t* inputs[] = {a_data_phy, b_data_phy};
-  int input_width = 2; // num of ints before next input begins
+  int input_width = 3; // num of ints before next input begins
 
   int num_of_outputs = 1;
   uint32_t* outputs[] = {c_data_phy};
-  int output_width = 2; // num of ints before next output begins
+  int output_width = 3; // num of ints before next output begins
   
-  int nd_range[] = {WG_SIZE_X, 1, 1};
-  int wg_size[] = {WG_SIZE_X*MAX_WGS, 1, 1};
+  int nd_range[] = {WG_SIZE_X*MAX_WGS, 1, 1};
+  int wg_size[] = {WG_SIZE_X, 1, 1};
   
   // Call openCL driver to program the accelerator for kernel execution.
   launchKernel(baseAddress,
@@ -461,7 +459,7 @@ int main(int argc, char *argv[])
   }
 
   printf("Begin programmig the openCL kernel with location %15x: \n", mem);
-  uint32_t* c_data = programVadd(mem, offset, data_mem, orig_data_mem);
+  uint32_t* c_data = programInc3d(mem, offset, data_mem, orig_data_mem);
   
   printf("------Output of the kernel-----\n");
   for (i = 0; i < WG_SIZE_X*MAX_WGS; i++) 
