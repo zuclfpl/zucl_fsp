@@ -1,3 +1,7 @@
+
+#ifndef DEVICES_H
+#define DEVICES_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,3 +25,5 @@ int incFrameAddress(void);
 typedef struct {
 int encoding[2][8][64][2];	// 2 types M and L, 8 LUT positions from bottom to top A6-1 B6-1 C6-1 D6-1 A6-2 B6-2 C6-2 D6-2, 64 bits of value, 2 needed info: frame number and bitoffset
 } Xilinx_Lut_Bit_Offset;
+
+#endif

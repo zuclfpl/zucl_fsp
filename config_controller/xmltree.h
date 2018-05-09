@@ -1,3 +1,7 @@
+
+#ifndef XMLTREE_H
+#define XMLTREE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,3 +54,5 @@ void parseClkFreq(xmlDocPtr doc, xmlNode * a_node);
 void parseWGVector(xmlDocPtr doc, xmlNode * a_node);
 void parseInputParamWidth(xmlDocPtr doc, xmlNode * a_node);
 void parseOutputParamWidth(xmlDocPtr doc, xmlNode * a_node);
+
+#endif

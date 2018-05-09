@@ -1,3 +1,7 @@
+
+#ifndef CONFIG_API_L_H
+#define CONFIG_API_L_H
+
 #include "devices.h"
 #include "bitman.h"
 #include "xmltree.h"
@@ -49,3 +53,5 @@ void rebaseResources(int island, int height, int width, int start_column);
 
 //int replace_accelerator(char *BitFile, int island);
 //int query_kernel(char * KernelName);
+
+#endif

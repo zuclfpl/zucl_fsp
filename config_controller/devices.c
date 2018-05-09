@@ -99,6 +99,8 @@ struct DeviceParameters {
 	int RAMRowFrames;
 };
 
+extern int DeviceID;
+
 //const Xilinx_Lut_Bit_Offset XC7V_Lut_Bit_Offset =
 const Xilinx_Lut_Bit_Offset Series_7_Lut_Bit_Offset =
 {
