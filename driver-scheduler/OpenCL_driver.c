@@ -11,6 +11,8 @@
 // accelerator. 
 // 
 // The main() function shows how to map memory for the accelerator to operate on.
+//
+// TODO: Avoid duplication across work-group launch functions. 
 //----------------------------------------------------------
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +31,14 @@
 #define WG_SIZE_X 2
 #define MAX_WGS 1
 #define DEBUG 1
+#define BUF_LEN 4096
+#define PAGEMAP_LENGTH 8
+
+// The page frame shifted left by PAGE_SHIFT will give us the physcial address of the frame
+// Note that this number is architecture dependent. For me on x86_64 with 4096 page sizes,
+// it is defined as 12. If you're running something different, check the kernel source
+// for what it is defined as.
+#define PAGE_SHIFT 12
 
 int i;
 
@@ -413,6 +423,60 @@ uint32_t* programInc3d(int* baseAddress, int* originalAddress,
 	return c_data;
 } // programInc3d
 
+unsigned long get_page_frame_number_of_address(void *addr) {
+   // Open the pagemap file for the current process
+   FILE *pagemap = fopen("/proc/self/pagemap", "rb");
+
+   // Seek to the page that the buffer is on
+   unsigned long offset = (unsigned long)addr / getpagesize() * PAGEMAP_LENGTH;
+   if(fseek(pagemap, (unsigned long)offset, SEEK_SET) != 0) {
+      fprintf(stderr, "Failed to seek pagemap to proper location\n");
+      exit(1);
+   }
+
+   // The page frame number is in bits 0-54 so read the first 7 bytes 
+   // and clear the 55th bit
+   unsigned long page_frame_number = 0;
+   fread(&page_frame_number, 1, PAGEMAP_LENGTH-1, pagemap);
+
+   page_frame_number &= 0x7FFFFFFFFFFFFF;
+
+   fclose(pagemap);
+
+   return page_frame_number;
+}
+
+// Returns phy addrs to a page allocated in main memory by a user.
+uint64_t allocate_page_for_io_and_get_phy_addr()
+{
+  // Allocate some memory to manipulate
+  size_t buf_size = sizeof(char)*BUF_LEN;
+  
+  void *buffer = malloc(buf_size);
+  if(buffer == NULL) {
+    fprintf(stderr, "Failed to allocate memory for buffer\n");
+    exit(1);
+  }
+
+  // Lock the page in memory
+  // Do this before writing data to the buffer so that any copy-on-write
+  // mechanisms will give us our own page locked in memory
+  if(mlock(buffer, buf_size) == -1) {
+    fprintf(stderr, "Failed to lock page in memory: %s\n", strerror(errno));
+    exit(1);
+  }
+  
+  unsigned int page_frame_number = get_page_frame_number_of_address(buffer);  
+
+  // Find the difference from the buffer to the page boundary
+  unsigned int distance_from_page_boundary = (unsigned long)buffer % getpagesize();
+
+  // Determine how far to seek into memory to find the buffer
+  uint64_t orig_data_mem = (page_frame_number << PAGE_SHIFT);
+  
+  return orig_data_mem;
+}
+
 /*
   This main method shows an example for managing data. 
   It receives the memory location where the kernel is located as user input. 
@@ -448,10 +512,36 @@ int main(int argc, char *argv[])
     return -1;
   }
 
+  // Allocate some memory to manipulate
+/*  size_t buf_size = sizeof(char)*BUF_LEN;*/
+/*  */
+/*  void *buffer = malloc(buf_size);*/
+/*  if(buffer == NULL) {*/
+/*    fprintf(stderr, "Failed to allocate memory for buffer\n");*/
+/*    exit(1);*/
+/*  }*/
+
+/*  // Lock the page in memory*/
+/*  // Do this before writing data to the buffer so that any copy-on-write*/
+/*  // mechanisms will give us our own page locked in memory*/
+/*  if(mlock(buffer, buf_size) == -1) {*/
+/*    fprintf(stderr, "Failed to lock page in memory: %s\n", strerror(errno));*/
+/*    exit(1);*/
+/*  }*/
+/*  */
+/*  unsigned int page_frame_number = get_page_frame_number_of_address(buffer);  */
+
+/*  // Find the difference from the buffer to the page boundary*/
+/*  unsigned int distance_from_page_boundary = (unsigned long)buffer % getpagesize();*/
+
+  // Determine how far to seek into memory to find the buffer
+  //uint64_t orig_data_mem = (page_frame_number << PAGE_SHIFT);
+
+  off_t orig_data_mem = allocate_page_for_io_and_get_phy_addr();
   // arbitrarily chosen location which is known to be free
-  off_t orig_data_mem = 0x40000000; 
   int* data_mem = mmap(NULL, pagesize, PROT_READ | PROT_WRITE, 
                        MAP_SHARED, fd, orig_data_mem);
+  
   if (data_mem == MAP_FAILED) 
   {
     perror("Can't map data_memory");
