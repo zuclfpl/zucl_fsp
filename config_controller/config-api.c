@@ -247,11 +247,12 @@ RC     try_place_accelerator    (const char*        xml_file,   const int   isla
     xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
 
-    int i, tmp;
+    int i, j, tmp;
     int returnOfCheckRM;
     int PartialCfg = 1;
 
     char len;
+    unsigned char Byte0, Byte1, Byte2, Byte3;
 
     int Status;
 #if 0
@@ -329,9 +330,19 @@ RC     try_place_accelerator    (const char*        xml_file,   const int   isla
 
     // prepare the Trenz_partial.bit.bin for PCAP programming
     OutBitFilePtr = fopen(OutBitFile, "wb+");
-//  The output bitstream will be byte-swapped by fwrite command
-    fwrite(inData, 4, bitstream_len, OutBitFilePtr);
 
+    for (i = 0; i < bitstream_len; i++) {
+//        printf("0x%08x\n", inData[i]);
+        Byte0 = (char)((inData[i] >> (8*0)) & 0x000000FF);
+        Byte1 = (char)((inData[i] >> (8*1)) & 0x000000FF);
+        Byte2 = (char)((inData[i] >> (8*2)) & 0x000000FF);
+        Byte3 = (char)((inData[i] >> (8*3)) & 0x000000FF);
+
+        fwrite(&Byte1, 1, 1, OutBitFilePtr);
+        fwrite(&Byte0, 1, 1, OutBitFilePtr);
+        fwrite(&Byte3, 1, 1, OutBitFilePtr);
+        fwrite(&Byte2, 1, 1, OutBitFilePtr);
+    }
     // program the PCAP via Peta-linux FPGA's Manager firmware
     system("echo 1 > /sys/class/fpga_manager/fpga0/flags");
     system("echo Trenz_partial.bit.bin > /sys/class/fpga_manager/fpga0/firmware");
@@ -349,17 +360,6 @@ RC     try_place_accelerator    (const char*        xml_file,   const int   isla
     len = strlen(xml_file) + 1;
     islands[island_num].KernelFileName = malloc(len * sizeof(char));
     strcpy(islands[island_num].KernelFileName, xml_file);
-    // Free malloced variables
-//    if (RS != NULL)
-//        free(RS);
-//    if (Device != NULL)
-//        free(Device);
-//    if (target != NULL)
-//        free(target);
-//    if (inData != NULL)
-//        free(inData);
-//    if (outData != NULL)
-//        free(outData);
     /*free the document */
     xmlFreeDoc(doc);
 

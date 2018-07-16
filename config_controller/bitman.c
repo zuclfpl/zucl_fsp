@@ -99,9 +99,13 @@ int ByteSwap(unsigned int *inData, unsigned int *outData, int inSize)
     int tmp, i, j;
 
     for (i = 0; i < inSize; i++) {
-        tmp  = 0;
-        for (j = 0; j <= 3; j++)
-            tmp |= ((inData[i] >> (8*j)) & 0x000000FF) << 8*(3-j);
+        tmp = 0;
+    //    for (j = 0; j <= 3; j++)
+    //        tmp |= ((inData[i] >> (8*j)) & 0x000000FF) << 8*(3-j);
+        tmp = ((inData[i] >> 24) & 0x000000FF) |        // move word 3 to 0
+              ((inData[i] >>  8) & 0x0000FF00) |        // move word 2 to 1
+              ((inData[i] <<  8) & 0x00FF0000) |        // move word 1 to 2
+              ((inData[i] << 24) & 0xFF000000);         // move word 0 to 3
         outData[i] = tmp;
 //        printf("outData 0x%08x\n", outData[i]);
     }
