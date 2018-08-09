@@ -17,7 +17,7 @@
 
 #define HW_SLOTS 4
 
-volatile uint32_t phy_dec_addrs[HW_SLOTS] = {0xa0010000, 0xa0020000, 0xa0030000, 0xa0040000};
+volatile uint32_t phy_dec_addrs[HW_SLOTS] = {0xa0000000, 0xa0010000, 0xa0020000, 0xa0030000};
 volatile uint32_t* vir_dec_addrs[HW_SLOTS];
 
 int fd;

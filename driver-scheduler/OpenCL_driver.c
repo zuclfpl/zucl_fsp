@@ -7,7 +7,7 @@
 // NDRange, is accelerator done, and getting/setting status of the openCL 
 // accelerator. 
 //
-// The function programVadd() shows how to use the driver for a vector add 
+// The function programInc3d() shows how to use the driver for a vector add 
 // accelerator. 
 // 
 // The main() function shows how to map memory for the accelerator to operate on.
@@ -29,7 +29,7 @@
 
 // It depends on how the openCL kernel was synthesized
 #define WG_SIZE_X 2
-#define MAX_WGS 1
+#define MAX_WGS 50
 #define DEBUG 1
 #define BUF_LEN 4096
 #define PAGEMAP_LENGTH 8
@@ -41,6 +41,7 @@
 #define PAGE_SHIFT 12
 
 int i;
+int fd;
 
 /*
   Helper function for incremeting the workgroup id in 3 dimensions. 
@@ -71,6 +72,9 @@ void increment_wg_id(int* current_wg_id, int* max_wg_id)
   The function launches the whole ndrange to the accelerator by issuing 
   one workgroup at a time. It uses polling to identify if the accelerator
   is finished with its work.   
+  
+  Note, the driver assumes an ordering of kernel arguments: inputs followed by
+  outputs.
   
   Possible failures and their definitions:
   
@@ -127,6 +131,20 @@ void launchKernel(volatile int* kernel_loc,
 	    printf("input_addrs: 0x%015x  output_addrs: 0x%015x \n\r", 
 	           inputs_addr, outputs_addr);
     #endif
+    
+    printf("Status of control register: \n\r");
+    unsigned int con_1 = *control;
+	  
+	  // print status register bits
+	  for (i = 0; i < 8; i ++) {
+		  if (con_1 & (1 << i) ) {
+			  printf("1");
+		  } else {
+			  printf("0");
+		  }
+	  }
+	  printf("\n\r");
+    
 	  *wg_x = wg_id[0];
 	  *wg_y = wg_id[1];
 	  *wg_z = wg_id[2];
@@ -136,13 +154,34 @@ void launchKernel(volatile int* kernel_loc,
 	  *o_z = 0;
 
 	  for(i = 0; i < num_of_inputs; i++)
+	  {
 		  *(volatile int *)(inputs_addr + i*input_width) 
 		    = (volatile int *) inputs[i];
-
+		    
+		  if(input_width > 2)
+		  {
+		    // padd [63:32] bits to zero
+		    printf("seting input %d at addrs: %x\n", i,
+		           (inputs_addr + i*input_width + 1));
+		    
+		    *(volatile int *)(inputs_addr + i*input_width + 1) = 0;
+		  }
+    }
+    
 	  for(i = 0; i < num_of_outputs; i++)
+	  {
 		  *(volatile int *)(outputs_addr + i*output_width) 
         = (volatile int *) outputs[i];
-
+      
+      if(output_width > 2)
+		  {
+		    // padd [63:32] bits to zero
+		    printf("seting output %d at addrs: %x\n", i,
+		           (outputs_addr + i*output_width + 1));
+		    
+		    *(volatile int *)(outputs_addr + i*output_width + 1) = 0;
+		  }
+    }
     #ifdef DEBUG
 	    printf("Status of control register: \n\r");
 	  #endif
@@ -224,12 +263,34 @@ void launchWgs(volatile int* kernel_loc,
 	  *o_z = 0;
 
 	  for(i = 0; i < num_of_inputs; i++)
+	  {
 		  *(volatile int *)(inputs_addr + i*input_width) 
 		    = (volatile int *) inputs[i];
-
+		    
+		  if(input_width > 2)
+		  {
+		    // padd [63:32] bits to zero
+		    printf("seting input %d at addrs: %x\n", i,
+		           (inputs_addr + i*input_width + 1));
+		    
+		    *(volatile int *)(inputs_addr + i*input_width + 1) = 0;
+		  }
+    }
+    
 	  for(i = 0; i < num_of_outputs; i++)
+	  {
 		  *(volatile int *)(outputs_addr + i*output_width) 
         = (volatile int *) outputs[i];
+      
+      if(output_width > 2)
+		  {
+		    // padd [63:32] bits to zero
+		    printf("seting output %d at addrs: %x\n", i,
+		           (outputs_addr + i*output_width + 1));
+		    
+		    *(volatile int *)(outputs_addr + i*output_width + 1) = 0;
+		  }
+    }
 
     #ifdef DEBUG
 	    printf("Status of control register: \n\r");
@@ -305,12 +366,34 @@ void launchWg(volatile int* kernel_loc, int wg_id[],
   *o_z = 0;
 
   for(i = 0; i < num_of_inputs; i++)
+  {
 	  *(volatile int *)(inputs_addr + i*input_width) 
 	    = (volatile int *) inputs[i];
-
+	    
+	  if(input_width > 2)
+	  {
+	    // padd [63:32] bits to zero
+	    printf("seting input %d at addrs: %x\n", i,
+	           (inputs_addr + i*input_width + 1));
+	    
+	    *(volatile int *)(inputs_addr + i*input_width + 1) = 0;
+	  }
+  }
+  
   for(i = 0; i < num_of_outputs; i++)
+  {
 	  *(volatile int *)(outputs_addr + i*output_width) 
       = (volatile int *) outputs[i];
+    
+    if(output_width > 2)
+	  {
+	    // padd [63:32] bits to zero
+	    printf("seting output %d at addrs: %x\n", i,
+	           (outputs_addr + i*output_width + 1));
+	    
+	    *(volatile int *)(outputs_addr + i*output_width + 1) = 0;
+	  }
+  }
 
   #ifdef DEBUG
     printf("Status of control register: \n\r");
@@ -373,7 +456,7 @@ int is_done(volatile int* kernel_loc)
 }
 
 /*
-  Example source code for programming an OpenCL kernel (vector add)
+  Example source code for programming an OpenCL kernel (Inc 3d)
   using the ZUCL openCL driver.
  */
 uint32_t* programInc3d(int* baseAddress, int* originalAddress, 
@@ -422,6 +505,21 @@ uint32_t* programInc3d(int* baseAddress, int* originalAddress,
                    
 	return c_data;
 } // programInc3d
+
+// Allocate physical memory using mmap 
+uint32_t* allocate_phy_mem(off_t orig_data_mem)
+{
+  size_t pagesize = sysconf(_SC_PAGE_SIZE);
+  uint32_t* data_mem = mmap(NULL, pagesize, PROT_READ | PROT_WRITE, 
+                            MAP_SHARED, fd, orig_data_mem);
+  if (data_mem == MAP_FAILED) 
+  {
+    perror("Can't map data_memory");
+    return -1;
+  }
+  
+  return data_mem;
+}
 
 unsigned long get_page_frame_number_of_address(void *addr) {
    // Open the pagemap file for the current process
@@ -482,9 +580,12 @@ uint64_t allocate_page_for_io_and_get_phy_addr()
   It receives the memory location where the kernel is located as user input. 
   Then it allocates the physical memory using mmap for kernel to work on as 
   well as the control registers of the kernel. 
-  Finally, it simply calls the user application (vector add) with the 
+  Finally, it simply calls the user application (Inc3d) with the 
   mapped memory arguments and displays the results. 
+  Note, the memory allocation of the IO data is bound to a page size. 
+  Beyond that it may not return contiguous memory for accelerator to operate on.
  */
+
 int main(int argc, char *argv[]) 
 {
   if (argc < 2) 
@@ -498,7 +599,7 @@ int main(int argc, char *argv[])
   size_t pagesize = sysconf(_SC_PAGE_SIZE);
   printf("accel address: %15x with page size %d: \n", offset, pagesize);
 
-  int fd = open("/dev/mem", O_RDWR | O_SYNC);
+  fd = open("/dev/mem", O_RDWR | O_SYNC);
   if (fd < 1) {
 		perror("Cannot open /dev/mem");
 		return -1;
@@ -513,30 +614,6 @@ int main(int argc, char *argv[])
   }
 
   // Allocate some memory to manipulate
-/*  size_t buf_size = sizeof(char)*BUF_LEN;*/
-/*  */
-/*  void *buffer = malloc(buf_size);*/
-/*  if(buffer == NULL) {*/
-/*    fprintf(stderr, "Failed to allocate memory for buffer\n");*/
-/*    exit(1);*/
-/*  }*/
-
-/*  // Lock the page in memory*/
-/*  // Do this before writing data to the buffer so that any copy-on-write*/
-/*  // mechanisms will give us our own page locked in memory*/
-/*  if(mlock(buffer, buf_size) == -1) {*/
-/*    fprintf(stderr, "Failed to lock page in memory: %s\n", strerror(errno));*/
-/*    exit(1);*/
-/*  }*/
-/*  */
-/*  unsigned int page_frame_number = get_page_frame_number_of_address(buffer);  */
-
-/*  // Find the difference from the buffer to the page boundary*/
-/*  unsigned int distance_from_page_boundary = (unsigned long)buffer % getpagesize();*/
-
-  // Determine how far to seek into memory to find the buffer
-  //uint64_t orig_data_mem = (page_frame_number << PAGE_SHIFT);
-
   off_t orig_data_mem = allocate_page_for_io_and_get_phy_addr();
   // arbitrarily chosen location which is known to be free
   int* data_mem = mmap(NULL, pagesize, PROT_READ | PROT_WRITE, 
