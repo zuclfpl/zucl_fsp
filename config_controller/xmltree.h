@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
@@ -17,7 +19,6 @@ void parseTarget(xmlDocPtr doc, xmlNode * a_node);
 void parseLength(xmlDocPtr doc, xmlNode * a_node);
 void parseBitstream(xmlDocPtr doc, xmlNode * a_node);
 void parseNDRangeID(xmlDocPtr doc, xmlNode * a_node);
-//void parseBaseAddr(xmlDocPtr doc, xmlNode * a_node);
 void parseNArgs(xmlDocPtr doc, xmlNode * a_node);
 void parseOffAddr0(xmlDocPtr doc, xmlNode * a_node);
 void parseOffAddr1(xmlDocPtr doc, xmlNode * a_node);
@@ -55,4 +56,5 @@ void parseWGVector(xmlDocPtr doc, xmlNode * a_node);
 void parseInputParamWidth(xmlDocPtr doc, xmlNode * a_node);
 void parseOutputParamWidth(xmlDocPtr doc, xmlNode * a_node);
 
+char *trimWhiteSpace(char *str);
 #endif

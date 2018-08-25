@@ -4,6 +4,8 @@
 #define CONFIG_API_H_ECOSCALE
 
 #include <stdbool.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 // this is the enumeration listing the return codes
 typedef enum RC
@@ -15,6 +17,7 @@ typedef enum RC
   // e.g. from place accelerator
   // or remove accelerator functions
   DEVICE_UNSUPPORTED,
+  ISLAND_INVALID,
   ISLAND_INAVAILABLE,
   RESOURCE_MISMATCH
 } RC;

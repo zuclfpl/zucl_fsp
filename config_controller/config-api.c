@@ -34,11 +34,6 @@ int init_resource(char *Dev)
 {
     int i, j;
 
-//    if (strcmp(Dev,"XC7Z020") != 0) {
-//        printf("Device is not supporting!\n");
-//        return -1;
-//    }
-
     islands = malloc(NoOfIslands * sizeof(*islands));
     if (islands == NULL) {
         printf("Failed to allocate the islands pointer\n");
@@ -140,39 +135,6 @@ RC     remove_accelerator       (const int    island_num)
     return SUCCESS;
 }
 
-//int notify_done(int island)
-//{
-//    int defrag = 0;
-//    int i;
-//    int base_addr;
-//    // Update islands' statuses
-//    set_avail_region(island);
-//    // Setup the optimal_islands array
-//    optimal_islands = malloc(NoOfIslands * sizeof(*optimal_islands));
-//    if (optimal_islands == NULL) {
-//        printf("Failed to allocate the optimal_islands pointer\n");
-//        return -1;
-//    }
-//    // Find optimal islands array
-//    for (i = 0; i < NoOfIslands; i++)
-//    {
-//        defrag = find_optimal_islands(island);
-//        if (defrag)
-//        {
-//            // Stop queueing jobs in the moving kernel
-//            //stop_job_queue(moving.src_island);
-//            base_addr = place_accelerator_ptr(moving.KernelFileName, moving.dst_island);
-//            set_avail_region(moving.src_island);
-//            // Start queueing jobs in the moved kernel
-//            //start_job_queue(moving.dst_island);
-//        }
-//    }
-//    // Remove the optimal_islands array if allocated
-//    if (optimal_islands)
-//        free(optimal_islands);
-//    return base_addr;
-//}
-
 int find_optimal_islands(int island)
 {
     int i, j;
@@ -220,27 +182,6 @@ void setResourceOccupied(int island, int height, int width, int start_column)
             resources[i][j] = 1;
 }
 
-//int place_accelerator(char *BitFile)
-//{
-//    int i;
-//    int val;
-//    int total_avail_regions;
-//    struct avail_region *avail_regions;
-//
-//    // report available regions to place module
-//    avail_regions = report_available_regions();
-//    total_avail_regions = avail_regions[0].total;
-//    for (i = 0; i < total_avail_regions; i++) {
-//        place_accelerator_ptr(BitFile, avail_regions[i].island_id);
-//        // if succeeds, returns the base address value
-//        if (val)
-//            return val;
-//    }
-//    // if fails, returns NULL
-//    return NULL;
-//}
-
-//int place_accelerator_ptr(char *BitFile, int island)
 RC     try_place_accelerator    (const char*        xml_file,   const int   island_num)
 {
     // Parse data from the XML metafile
@@ -255,6 +196,15 @@ RC     try_place_accelerator    (const char*        xml_file,   const int   isla
     unsigned char Byte0, Byte1, Byte2, Byte3;
 
     int Status;
+
+    const char memDeviceICAP[] = "/dev/icap0";
+    const char memDeviceDcpl0[] = "/sys/class/CLASS_TUT100/tutDcplr/setDcpl";
+    const char memDeviceDcpl1[] = "/sys/class/CLASS_TUT110/tutDcplr/setDcpl";
+    const char memDeviceDcpl2[] = "/sys/class/CLASS_TUT120/tutDcplr/setDcpl";
+    const char memDeviceDcpl3[] = "/sys/class/CLASS_TUT130/tutDcplr/setDcpl";
+
+    int fdICAP, fdDcpl0, fdDcpl1, fdDcpl2, fdDcpl3;
+
 #if 0
     u32 PartialAddress;
     u32 IntrStsReg = 0;
@@ -262,7 +212,8 @@ RC     try_place_accelerator    (const char*        xml_file,   const int   isla
 #endif
     int res_avail;
 
-    char * OutBitFile = "./Trenz_partial.bit.bin";
+    // mkdir /lib/firmware
+    char * OutBitFile = "/lib/firmware/Trenz_partial.bit.bin";
     FILE * OutBitFilePtr;
     /*parse the file and get the DOM */
     doc = xmlReadFile(xml_file, NULL, 0);
@@ -286,8 +237,7 @@ RC     try_place_accelerator    (const char*        xml_file,   const int   isla
     parseHeight(doc, root_element);
     parseWidth(doc, root_element);
     parseStartColumn(doc, root_element);
-//    for (i = 0; i < bitstream_len; i++)
-//        printf("0x%08x\n", inData[i]);
+
     // Bitstream relocation
     Device = malloc(strlen(target) * sizeof(char));
     if (Device == NULL) {
@@ -298,13 +248,6 @@ RC     try_place_accelerator    (const char*        xml_file,   const int   isla
         strcpy(Device, target);
         SetGlobalDeviceParameters(Device);
     }
-
-//    // check if Resources is available
-//    res_avail = checkResourceAvail(island_num, height, width, start_column);
-//    if (res_avail) {
-//        printf("Sufficient resource is not available at the island %d\n", island_num);
-//        return ISLAND_INAVAILABLE;
-//    }
 
     // Check resource footprint matching
     returnOfCheckRM = check_available_region_RS(island_num, RS);
@@ -327,25 +270,74 @@ RC     try_place_accelerator    (const char*        xml_file,   const int   isla
         }
     }
 //	printf("Changed FAR\n");
+#ifdef ICAP_CONFIG
+    // program the FPGA via the ICAP
+    fdICAP  = open( memDeviceICAP, O_RDWR | O_SYNC );
+#endif
+    fdDcpl0 = open( memDeviceDcpl0, O_WRONLY );
+    fdDcpl1 = open( memDeviceDcpl1, O_WRONLY );
+    fdDcpl2 = open( memDeviceDcpl2, O_WRONLY );
+    fdDcpl3 = open( memDeviceDcpl3, O_WRONLY );
 
+    // de-activate the PR module before partial reconfiguration
+    printf("De-activating module in island %d\n", island_num);
+
+    switch(island_num)
+    {
+        case 0:
+            write(fdDcpl0, "1", 1*sizeof(int));
+            break;
+        case 1:
+            write(fdDcpl1, "1", 1*sizeof(int));
+            break;
+        case 2:
+            write(fdDcpl2, "1", 1*sizeof(int));
+            break;
+        case 3:
+            write(fdDcpl3, "1", 1*sizeof(int));
+            break;
+        default:
+            printf("Invalid island %d\n", island_num);
+            return ISLAND_INVALID;
+    }
+
+    // partial reconfiguration via ICAP
+    printf("Configuring module in island %d\n", island_num);
+
+#ifdef PCAP_CONFIG
     // prepare the Trenz_partial.bit.bin for PCAP programming
     OutBitFilePtr = fopen(OutBitFile, "wb+");
-
-    for (i = 0; i < bitstream_len; i++) {
-//        printf("0x%08x\n", inData[i]);
-        Byte0 = (char)((inData[i] >> (8*0)) & 0x000000FF);
-        Byte1 = (char)((inData[i] >> (8*1)) & 0x000000FF);
-        Byte2 = (char)((inData[i] >> (8*2)) & 0x000000FF);
-        Byte3 = (char)((inData[i] >> (8*3)) & 0x000000FF);
-
-        fwrite(&Byte1, 1, 1, OutBitFilePtr);
-        fwrite(&Byte0, 1, 1, OutBitFilePtr);
-        fwrite(&Byte3, 1, 1, OutBitFilePtr);
-        fwrite(&Byte2, 1, 1, OutBitFilePtr);
-    }
+    fwrite(inData, 4, bitstream_len, OutBitFilePtr);
     // program the PCAP via Peta-linux FPGA's Manager firmware
+    system("cd /lib/firmware");
     system("echo 1 > /sys/class/fpga_manager/fpga0/flags");
     system("echo Trenz_partial.bit.bin > /sys/class/fpga_manager/fpga0/firmware");
+#endif
+
+#ifdef ICAP_CONFIG
+    write(fdICAP, inData, bitstream_len*4);
+#endif
+    // activate the PR module before partial reconfiguration
+    printf("Activating module in island %d\n", island_num);
+
+    switch(island_num)
+    {
+        case 0:
+            write(fdDcpl0, "0", 1*sizeof(int));
+            break;
+        case 1:
+            write(fdDcpl1, "0", 1*sizeof(int));
+            break;
+        case 2:
+            write(fdDcpl2, "0", 1*sizeof(int));
+            break;
+        case 3:
+            write(fdDcpl3, "0", 1*sizeof(int));
+            break;
+        default:
+            printf("Invalid island %d\n", island_num);
+            return ISLAND_INVALID;
+    }
 
     // set that island occupied
     set_occupied_region(island_num);
@@ -371,24 +363,6 @@ RC     try_place_accelerator    (const char*        xml_file,   const int   isla
 //    return getBaseAddr(island);
     return SUCCESS;
 }
-
-///**
-// * Query if a kernel with KernelName is already placed in FPGA fabric
-// * @param KernelName a char argument
-// *        name of kernel being queried
-// * @return base address of the kernel if placed
-// *         NULL if not
-// */
-//int query_kernel(char * KernelName)
-//{
-//    int i;
-//
-//    for (i = 0; i < NoOfIslands; i++)
-//        if (strcmp(KernelName, islands[i].KernelName) == 0)
-//            return getBaseAddr(i);
-//
-//    return NULL;
-//}
 
 void backupResources(int island, int height, int width, int start_column)
 {
@@ -417,59 +391,6 @@ void rebaseResources(int island, int height, int width, int start_column)
     set_occupied_region(island);
 }
 
-//int replace_accelerator(char *BitFile, int island)
-//{
-////    int base_addr;
-//    RC place_acc;
-//
-//    // Parse data from the XML metafile
-//    xmlDoc *doc1 = NULL;
-//    xmlNode *root_element1 = NULL;
-//    /*parse the file and get the DOM */
-//    // parse the current kernel's details to prepare the resources[][] for coming placement
-//    doc1 = xmlReadFile(islands[island].KernelFileName, NULL, 0);
-//
-//    if (doc1 == NULL) {
-//        printf("error: could not parse file %s\n", islands[island].KernelFileName);
-//        return -1;
-//    }
-//
-//    /*Get the root element node */
-//    root_element1 = xmlDocGetRootElement(doc1);
-//
-////    print_element_names(root_element);
-//
-//    parseHeight(doc1, root_element1);
-//    parseWidth(doc1, root_element1);
-//    parseStartColumn(doc1, root_element1);
-//    // backup & prepare the Resources array for placing a new kernel
-//    backupResources(island, height, width, start_column);
-//    // Stop queueing jobs in the moving kernel
-//    //stop_job_queue(moving.src_island);
-////    base_addr = place_accelerator_ptr(BitFile, island);
-//    place_acc = try_place_accelerator(BitFile, island);
-//    if (place_acc != SUCCESS) {
-//        // get back arguments because they contained new values from BitFile
-//        parseHeight(doc1, root_element1);
-//        parseWidth(doc1, root_element1);
-//        parseStartColumn(doc1, root_element1);
-//
-//        rebaseResources(island, height, width, start_column);
-//        return -1;
-//    }
-//    // Start queueing jobs in the moved kernel
-//    //start_job_queue(moving.dst_island);
-//    /*free the document */
-//    xmlFreeDoc(doc1);
-//
-//    /*
-//     *Free the global variables that may
-//     *have been allocated by the parser.
-//     */
-//    xmlCleanupParser();
-//    return getBaseAddr(island);
-//}
-
 char *getIslandString(int island)
 {
     char * IslandString;
@@ -482,7 +403,7 @@ char *getIslandString(int island)
     for (i = start; i < end; i++)                 
         IslandString[i-start] = ResourceString[i];
 
-    IslandString[len] = NULL;
+    IslandString[len] = 0;
 
     return IslandString;
 }
@@ -502,7 +423,7 @@ bool   check_resource_string    (const int    island_num, const char* resource_s
     for (i = start; i < end; i++)
         IslandString[i-start] = ResourceString[i];
 
-    IslandString[len] = NULL;
+    IslandString[len] = 0;
     len = strlen(resource_string);
     for (i = 0; i < len; i++)
         if (strncmp(resource_string, IslandString, i))

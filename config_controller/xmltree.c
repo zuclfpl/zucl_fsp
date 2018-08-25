@@ -108,16 +108,21 @@ void
 parseHW(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"hw")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
                 if (kernel_name == NULL)
                     kernel_name = malloc(strlen(key)*sizeof(char));
                 strcpy(kernel_name, key);
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
         }
 
@@ -129,16 +134,21 @@ void
 parseRS(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"resource-string")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
                 if (RS == NULL)
                     RS = malloc(strlen(key)*sizeof(char));
                 strcpy(RS, key);
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
         }
 
@@ -150,16 +160,21 @@ void
 parseTarget(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"target")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
                 if (target == NULL)
                     target = malloc(strlen(key)*sizeof(char));
                 strcpy(target, key);
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
         }
 
@@ -209,22 +224,25 @@ void
 parseBitstream(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[9];
     int getkey;
     int i, j, len;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"bitstream")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
                 len = strlen(key);
                 if (inData == NULL)
                     inData = malloc(bitstream_len*sizeof(unsigned int));
                 j = 0;
 
                 for (i = 0; i < len; i= i+8) {
+
                     subkey[0] = key[i];
                     subkey[1] = key[i+1];
                     subkey[2] = key[i+2];
@@ -237,7 +255,10 @@ parseBitstream(xmlDocPtr doc, xmlNode * a_node)
                     getkey = (int)strtol(subkey, NULL, 16);
                     inData[j++] = getkey;
                 }
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
         }
 
@@ -245,39 +266,24 @@ parseBitstream(xmlDocPtr doc, xmlNode * a_node)
     }
 }
 
-//void
-//parseBaseAddr(xmlDocPtr doc, xmlNode * a_node)
-//{
-//    xmlNode *cur_node = NULL;
-//    xmlChar *key;
-//
-//    char subkey[11];
-//    int getkey;
-//    int i;
-//    subkey[8] = NULL;
-//    for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
-//        if (cur_node->type == XML_ELEMENT_NODE) {
-//            if (!xmlStrcmp(cur_node->name, (const xmlChar *)"base_address")) {
-//                key = xmlNodeListGetString(doc, cur_node->children, 1);
-//
-//                subkey[0] = key[2];
-//                subkey[1] = key[3];
-//                subkey[2] = key[4];
-//                subkey[3] = key[5];
-//                subkey[4] = key[6];
-//                subkey[5] = key[7];
-//                subkey[6] = key[8];
-//                subkey[7] = key[9];
-//
-//                getkey = (int)strtol(subkey, NULL, 16);
-//                base_addr = getkey;
-//                xmlFree(key);
-//            }
-//
-//        parseBaseAddr(doc, cur_node->children);
-//        }
-//    }
-//}
+char *trimWhiteSpace(char *str)
+{
+    char *end;
+
+    // Trim leading space
+    while(isspace((unsigned char)*str)) str++;
+
+    if (*str == 0)
+        return str;
+
+    // Trim trailing space
+    end = str + strlen(str) - 1;
+    while(end > str && isspace((unsigned char)*end)) end--;
+
+    end[1] = 0;
+
+    return str;
+}
 
 void
 parseNArgs(xmlDocPtr doc, xmlNode * a_node)
@@ -302,16 +308,18 @@ void
 parseOffAddr0(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_0")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -324,7 +332,10 @@ parseOffAddr0(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_0 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr0(doc, cur_node->children);
@@ -336,16 +347,18 @@ void
 parseOffAddr1(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_1")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -358,7 +371,10 @@ parseOffAddr1(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_1 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr1(doc, cur_node->children);
@@ -370,16 +386,18 @@ void
 parseOffAddr2(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_2")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -392,7 +410,10 @@ parseOffAddr2(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_2 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr2(doc, cur_node->children);
@@ -404,16 +425,18 @@ void
 parseOffAddr3(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_3")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -426,7 +449,10 @@ parseOffAddr3(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_3 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr3(doc, cur_node->children);
@@ -438,16 +464,18 @@ void
 parseOffAddr4(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_4")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -460,7 +488,10 @@ parseOffAddr4(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_4 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr4(doc, cur_node->children);
@@ -472,16 +503,18 @@ void
 parseOffAddr5(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_5")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -494,7 +527,10 @@ parseOffAddr5(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_5 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr5(doc, cur_node->children);
@@ -506,16 +542,18 @@ void
 parseOffAddr6(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_6")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -528,7 +566,10 @@ parseOffAddr6(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_6 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr6(doc, cur_node->children);
@@ -540,16 +581,18 @@ void
 parseOffAddr7(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_7")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -562,7 +605,10 @@ parseOffAddr7(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_7 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr7(doc, cur_node->children);
@@ -574,16 +620,18 @@ void
 parseOffAddr8(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_8")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -596,7 +644,10 @@ parseOffAddr8(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_8 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr8(doc, cur_node->children);
@@ -608,16 +659,18 @@ void
 parseOffAddr9(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_9")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -630,7 +683,10 @@ parseOffAddr9(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_9 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr9(doc, cur_node->children);
@@ -642,16 +698,18 @@ void
 parseOffAddr10(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_10")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -664,7 +722,10 @@ parseOffAddr10(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_10 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr10(doc, cur_node->children);
@@ -676,16 +737,18 @@ void
 parseOffAddr11(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_11")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -698,7 +761,10 @@ parseOffAddr11(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_11 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr11(doc, cur_node->children);
@@ -710,16 +776,18 @@ void
 parseOffAddr12(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_12")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -732,7 +800,10 @@ parseOffAddr12(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_12 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr12(doc, cur_node->children);
@@ -744,16 +815,18 @@ void
 parseOffAddr13(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_13")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -766,7 +839,10 @@ parseOffAddr13(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_13 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr13(doc, cur_node->children);
@@ -778,16 +854,18 @@ void
 parseOffAddr14(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_14")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -800,7 +878,10 @@ parseOffAddr14(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_14 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr14(doc, cur_node->children);
@@ -812,16 +893,18 @@ void
 parseOffAddr15(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"offset_address_15")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -834,7 +917,10 @@ parseOffAddr15(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 off_addr_15 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseOffAddr15(doc, cur_node->children);
@@ -846,16 +932,18 @@ void
 parseBaseAddr0(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"base_address_island_0")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -868,7 +956,10 @@ parseBaseAddr0(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 base_addr_0 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseBaseAddr0(doc, cur_node->children);
@@ -880,16 +971,18 @@ void
 parseBaseAddr1(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"base_address_island_1")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -902,7 +995,10 @@ parseBaseAddr1(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 base_addr_1 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseBaseAddr1(doc, cur_node->children);
@@ -914,16 +1010,18 @@ void
 parseBaseAddr2(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"base_address_island_2")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -936,7 +1034,10 @@ parseBaseAddr2(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 base_addr_2 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseBaseAddr2(doc, cur_node->children);
@@ -948,16 +1049,18 @@ void
 parseBaseAddr3(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"base_address_island_3")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -970,7 +1073,10 @@ parseBaseAddr3(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 base_addr_3 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseBaseAddr3(doc, cur_node->children);
@@ -982,16 +1088,18 @@ void
 parseBaseAddr4(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"base_address_island_4")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -1004,7 +1112,10 @@ parseBaseAddr4(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 base_addr_4 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseBaseAddr4(doc, cur_node->children);
@@ -1016,16 +1127,18 @@ void
 parseBaseAddr5(xmlDocPtr doc, xmlNode * a_node)
 {
     xmlNode *cur_node = NULL;
-    xmlChar *key;
+    xmlChar *key, *old_key;
 
     char subkey[11];
     int getkey;
     int i;
-    subkey[8] = NULL;
+    subkey[8] = 0;
     for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
         if (cur_node->type == XML_ELEMENT_NODE) {
             if (!xmlStrcmp(cur_node->name, (const xmlChar *)"base_address_island_5")) {
                 key = xmlNodeListGetString(doc, cur_node->children, 1);
+                old_key = key;
+                key = trimWhiteSpace(key);
 
                 subkey[0] = key[2];
                 subkey[1] = key[3];
@@ -1038,13 +1151,17 @@ parseBaseAddr5(xmlDocPtr doc, xmlNode * a_node)
 
                 getkey = (int)strtol(subkey, NULL, 16);
                 base_addr_5 = getkey;
+                key = old_key;
                 xmlFree(key);
+                key = NULL;
+                old_key = NULL;
             }
 
         parseBaseAddr5(doc, cur_node->children);
         }
     }
 }
+
 int
 getBaseAddr(int island)
 {
@@ -1081,7 +1198,7 @@ getBaseAddr(int island)
             parseBaseAddr5(doc, root_element);
             return base_addr_5;
         default:
-            return NULL;
+            return 0;
     }
 }
 
