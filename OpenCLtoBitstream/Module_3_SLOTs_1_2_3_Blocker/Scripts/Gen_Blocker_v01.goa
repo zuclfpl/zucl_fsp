@@ -1,0 +1,39 @@
+OpenBinFPGA FileName=%GOAHEAD_HOME%\Devices\xcku9eg-ffvc900.binFPGA;
+Reset;
+ClearSelection;
+
+# INT_ Coordinates of Partial Module
+IfExists Variable=ModLowerLeftX   Then="NOP;" Else="Set Variable=ModLowerLeftX  Value=0;";
+IfExists Variable=ModLowerLeftY   Then="NOP;" Else="Set Variable=ModLowerLeftY  Value=180;";
+IfExists Variable=ModUpperRightX   Then="NOP;" Else="Set Variable=ModUpperRightX  Value=45;";
+IfExists Variable=ModUpperRightY   Then="NOP;" Else="Set Variable=ModUpperRightY  Value=239;";
+
+
+# Assign the blocker size
+IfExists Variable=BlockWidth   Then="NOP;" Else="Set Variable=BlockWidth  Value=1;";
+IfExists Variable=BlockHeight   Then="NOP;" Else="Set Variable=BlockHeight  Value=1;";
+
+
+RunScript FileName="./macros_tunnel.goa"; 
+
+## Upper Blocker
+#AddBlockToSelection UpperLeftTile=INT_X[%ModLowerLeftX%]Y[%ModUpperRightY%+1] LowerRightTile=INT_X[%ModUpperRightX%]Y[%ModUpperRightY%+%BlockHeight%];
+#ExpandSelection;
+
+# Bottom Blocker
+AddBlockToSelection UpperLeftTile=INT_X[%ModLowerLeftX%]Y[%ModLowerLeftY%-1] LowerRightTile=INT_X[%ModUpperRightX%]Y[%ModLowerLeftY%-%BlockHeight%];
+ExpandSelection;
+
+# Right Blocker
+AddBlockToSelection UpperLeftTile=INT_X[%ModUpperRightX%+1]Y[%ModLowerLeftY%] LowerRightTile=INT_X[%ModUpperRightX%+%BlockWidth%]Y[%ModUpperRightY%];
+ExpandSelection;
+
+
+# Exclude this port due to the fact that is generates a Slice containing invalid programming
+ExcludePortsFromBlockingInSelection PortName=LOGIC_OUTS_W31 CheckForExistence=False IncludeAllPorts=True; 
+
+
+BlockSelection Prefix=blocker_net BlockWithEndPips=True SliceNumber=0 PrintProgress=True PrintUnblockedPorts=True UnblockedPortsToIgnore="(CTRL_)|(GND_WIRE)|(LOGIC)|(BYP_BOUNCE1)";
+SaveAsBlocker FileName=./Scripts/module_blocker.tcl;
+
+Exit;
