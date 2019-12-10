@@ -20,4 +20,19 @@
 |DSPs					|336      |
 -----------------------------------
 
+## 1 slot module
+### Merging the module to the static
+bitman.exe -m 0 180 138 239 ${module name}.bit zucl_stc.bit -F Merged_${module name}_zucl_stc.bit
+bitman.exe -m 0 240 138 299 ${module name}.bit zucl_stc.bit -F Merged_${module name}_zucl_stc.bit
+bitman.exe -m 0 300 138 359 ${module name}.bit zucl_stc.bit -F Merged_${module name}_zucl_stc.bit
+bitman.exe -m 0 360 138 419 ${module name}.bit zucl_stc.bit -F Merged_${module name}_zucl_stc.bit
+bitman.exe -m 0 180 138 239 ${module name}.bit zucl_stc.bit -F Merged_${module name}_zucl_stc.bit
+### Cut out the partial bitstream
+bitman.exe -x 0 180 138 239 Merged_${module name}_zucl_stc.bit -M 0 180 Partial_${module name}.bit
+bitman.exe -x 0 240 138 299 Merged_${module name}_zucl_stc.bit -M 0 180 Partial_${module name}.bit
+bitman.exe -x 0 300 138 359 Merged_${module name}_zucl_stc.bit -M 0 180 Partial_${module name}.bit
+bitman.exe -x 0 360 138 419 Merged_${module name}_zucl_stc.bit -M 0 180 Partial_${module name}.bit
+bitman.exe -x 0 180 138 239 Merged_${module name}_zucl_stc.bit -M 0 180 Partial_${module name}.bit
+
+
 Contact: if you have any concern, please write to me at khoa.pham@manchester.ac.uk!
