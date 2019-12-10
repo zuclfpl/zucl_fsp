@@ -36,11 +36,11 @@
 1. Slot 0:
 	- `bitman.exe -x 0 180 138 239 Merged_${module name}_zucl_stc.bit -M 0 180 Partial_${module name}.bit`
 2. Slot 1:
-	- `bitman.exe -x 0 240 138 299 Merged_${module name}_zucl_stc.bit -M 0 180 Partial_${module name}.bit`
+	- `bitman.exe -x 0 240 138 299 Merged_${module name}_zucl_stc.bit -M 0 240 Partial_${module name}.bit`
 3. Slot 2:
-	- `bitman.exe -x 0 300 138 359 Merged_${module name}_zucl_stc.bit -M 0 180 Partial_${module name}.bit`
+	- `bitman.exe -x 0 300 138 359 Merged_${module name}_zucl_stc.bit -M 0 300 Partial_${module name}.bit`
 4. Slot 3:
-	- `bitman.exe -x 0 360 138 419 Merged_${module name}_zucl_stc.bit -M 0 180 Partial_${module name}.bit`
+	- `bitman.exe -x 0 360 138 419 Merged_${module name}_zucl_stc.bit -M 0 360 Partial_${module name}.bit`
 
 
 
