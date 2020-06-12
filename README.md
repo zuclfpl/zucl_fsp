@@ -45,3 +45,5 @@
 
 
 Contact: if you have any concern, please write to me at khoa.pham@manchester.ac.uk!
+
+*The ZUCL framework is now integrated to the FPGA Operating System (FOS) at https://github.com/khoapham/fos.git*
