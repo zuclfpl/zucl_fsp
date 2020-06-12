@@ -1,6 +1,8 @@
 # zucl_fsp2018
 # This is a part of our (Khoa Dang Pham, Anuj Vaishnav, and Malte Vesper) PhD projects at the University of Manchester, UK.
 
+*IMPORTANT: The ZUCL framework is now integrated to the FPGA Operating System (FOS) at https://github.com/khoapham/fos.git*
+
 * Available resources for 1 PR slot:
 -----------------------------------
 |						|Available|
@@ -45,5 +47,3 @@
 
 
 Contact: if you have any concern, please write to me at khoa.pham@manchester.ac.uk!
-
-*The ZUCL framework is now integrated to the FPGA Operating System (FOS) at https://github.com/khoapham/fos.git*
